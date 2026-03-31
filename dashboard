@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="rw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rwema IoT Glass Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 20px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0F0C29, #302B63, #24243E);
+            background-attachment: fixed;
+            color: white;
+            text-align: center;
+        }
+        .settings-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .card-container { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            border-radius: 20px;
+            width: 200px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        table {
+            width: 90%; margin: auto;
+            border-collapse: collapse;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+        th { background: var(--primary-color); padding: 15px; }
+        td { padding: 12px; border-bottom: 1px solid var(--glass-border); }
+        .btn-delete {
+            background: #FF4D4D; color: white; border: none;
+            padding: 5px 12px; border-radius: 5px; cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-delete:hover { background: #CC0000; }
+        input[type="color"] { cursor: pointer; border: none; background: none; width: 30px; height: 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="settings-panel">
+        <span>:art: Theme:</span>
+        <input type="color" id="colorPicker" value="#007BFF">
+    </div>
+
+    <h2>:rocket: DHT Sensor Real-Time Monitoring</h2>
+
+    <div class="card-container">
+        <div class="card">
+            <h3>Ubushyuhe</h3>
+            <p id="latest-temp" style="font-size: 28px; color: #FF6B6B; font-weight: bold;">-- °C</p>
+        </div>
+        <div class="card">
+            <h3>Ubuhehere</h3>
+            <p id="latest-hum" style="font-size: 28px; color: #4DADFF; font-weight: bold;">-- %</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Temp (°C)</th>
+                <th>Hum (%)</th>
+                <th>Time</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="data-table"></tbody>
+    </table>
+
+    <script>
+        // Color Theme logic
+        document.getElementById('colorPicker').addEventListener('input', (e) => {
+            document.documentElement.style.setProperty('--primary-color', e.target.value);
+        });
+
+        // Load Data function
+        function loadData() {
+            fetch('db_data/select.php')
+                .then(res => res.json())
+                .then(data => {
+                    let tableBody = document.getElementById('data-table');
+                    tableBody.innerHTML = "";
+                    if(data.length > 0) {
+                        document.getElementById('latest-temp').innerText = data[0].temperature + " °C";
+                        document.getElementById('latest-hum').innerText = data[0].humidity + " %";
+                        data.forEach(row => {
+                            tableBody.innerHTML += `<tr>
+                                <td>${row.id}</td>
+                                <td>${row.temperature}</td>
+                                <td>${row.humidity}</td>
+                                <td>${row.created_at}</td>
+                                <td><button class="btn-delete" onclick="deleteRow(${row.id})">Delete</button></td>
+                            </tr>`;
+                        });
+                    }
+                });
+        }
+
+        // Delete function
+        function deleteRow(id) {
+            if(confirm("Ese koko urashaka gusiba iyi record?")) {
+                fetch(`ALVC/delete.php?id=${id}`)
+                    .then(() => loadData());
+            }
+        }
+
+        setInterval(loadData, 5000);
+        window.onload = loadData;
+    </script>
+</body>
+</html>
