@@ -1,0 +1,25 @@
+<?php
+header('Content-Type: application/json');
+// Huza na OUR_WORKS
+$conn = mysqli_connect("localhost", "root", "", "db_data");
+
+if (!$conn) {
+    die(json_encode(["error" => "Connection failed: " . mysqli_connect_error()]));
+}
+
+$sql = "SELECT * FROM sensor_data ORDER BY id DESC LIMIT 10";
+$result = mysqli_query($conn, $sql);
+
+$rows = array();
+if ($result) {
+    while($r = mysqli_fetch_assoc($result)) {
+        // Guhindura imibare mo Float neza
+        $r['temperature'] = (float)$r['temperature'];
+        $r['humidity'] = (float)$r['humidity'];
+        $rows[] = $r;
+    }
+}
+
+echo json_encode($rows);
+mysqli_close($conn);
+?>
