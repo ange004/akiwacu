@@ -1,0 +1,65 @@
+<?php
+header('Content-Type: application/json');
+// Huza na OUR_WORKS
+$conn = mysqli_connect("localhost", "root", "", "db_data");
+
+if (!$conn) {
+    die(json_encode(["error" => "Connection failed: " . mysqli_connect_error()]));
+}
+
+$sql = "SELECT * FROM sensor_data ORDER BY id DESC LIMIT 10";
+$result = mysqli_query($conn, $sql);
+
+$rows = array();
+if ($result) {
+    while($r = mysqli_fetch_assoc($result)) {
+        // Guhindura imibare mo Float neza
+        $r['temperature'] = (float)$r['temperature'];
+        $r['humidity'] = (float)$r['humidity'];
+        $rows[] = $r;
+    }
+}
+
+echo json_encode($rows);
+mysqli_close($conn);
+?>[8:41 AM]<?php
+// 1. Amakuru yo kwinjira muri Database
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "db_data";
+
+// 2. Gufungura connection (Uburyo busanzwe - Procedural)
+$conn = mysqli_connect($servername, $username, $password, $dbname);
+
+// Kugenzura niba connection yagenze neza
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// 3. Kwakira JSON data ivuye kuri ESP32
+$json_data = file_get_contents("php://input");
+$data = json_decode($json_data, true);
+
+// 4. Kureba niba amakuru yuzuye (Temperature na Humidity zihari)
+if (isset($data['temperature']) && isset($data['humidity'])) {
+
+    $temp = $data['temperature'];
+    $hum = $data['humidity'];
+
+    // SQL query yo kwinjiza amakuru muri table sensor_data
+    $sql = "INSERT INTO sensor_data (temperature, humidity) VALUES ('$temp', '$hum')";
+
+    // Gukoresha mysqli_query aho gukoresha ->query()
+    if (mysqli_query($conn, $sql)) {
+        echo "Amakuru yageze muri Database neza!";
+    } else {
+        echo "Ikibazo: " . mysqli_error($conn);
+    }
+} else {
+    echo "Nta makuru yabonetse! (No data received)";
+}
+
+// 5. Gufunga connection
+mysqli_close($conn);
+?>
